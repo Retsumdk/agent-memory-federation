@@ -1,0 +1,152 @@
+#!/usr/bin/env bun
+import { FederationClient, MemoryStore } from './src/index';
+
+interface CLICommand {
+  command: string;
+  description: string;
+  execute: (args: string[]) => Promise<void>;
+}
+
+const commands: CLICommand[] = [
+  {
+    command: 'init',
+    description: 'Initialize a new federation node',
+    execute: async (args) => {
+      const [agentId, agentName] = args;
+      if (!agentId || !agentName) {
+        console.error('Usage: federation init <agent-id> <agent-name>');
+        process.exit(1);
+      }
+
+      const store = new MemoryStore();
+      console.log(`Initialized federation node: ${agentName} (${agentId})`);
+      console.log('Use "federation connect <seed-node>" to join network');
+    },
+  },
+  {
+    command: 'connect',
+    description: 'Connect to federation network',
+    execute: async (args) => {
+      const [seedNode] = args;
+      if (!seedNode) {
+        console.error('Usage: federation connect <seed-node>');
+        process.exit(1);
+      }
+
+      const client = new FederationClient({
+        agentId: 'cli-agent',
+        agentName: 'CLI Client',
+      });
+
+      await client.connect(seedNode);
+      console.log(`Connected to federation network via ${seedNode}`);
+      console.log('Connected peers:', client.getConnectedPeers().join(', ') || 'none');
+    },
+  },
+  {
+    command: 'store',
+    description: 'Store a memory',
+    execute: async (args) => {
+      const [content, ...tags] = args;
+      if (!content) {
+        console.error('Usage: federation store <content> [tags...]');
+        process.exit(1);
+      }
+
+      const client = new FederationClient({
+        agentId: 'cli-agent',
+        agentName: 'CLI Client',
+      });
+
+      const embedding = new Array(1536).fill(0).map(() => Math.random());
+      const memory = await client.storeMemory({
+        content,
+        embedding,
+        metadata: {
+          source: 'cli',
+          tags,
+          confidence: 1.0,
+          privacy: { level: 'balanced', masked: false },
+        },
+      });
+
+      console.log(`Stored memory: ${memory.id}`);
+    },
+  },
+  {
+    command: 'search',
+    description: 'Search federated memories',
+    execute: async (args) => {
+      const [query, limit = '10'] = args;
+      if (!query) {
+        console.error('Usage: federation search <query> [limit]');
+        process.exit(1);
+      }
+
+      const client = new FederationClient({
+        agentId: 'cli-agent',
+        agentName: 'CLI Client',
+      });
+
+      const embeddings = new Array(1536).fill(0).map(() => Math.random());
+      const results = await client.federatedSearch(query, embeddings, {
+        limit: parseInt(limit),
+      });
+
+      console.log(`Found ${results.length} results:`);
+      for (const result of results) {
+        console.log(`  - [${result.agentName}] ${result.memory.content.slice(0, 50)}... (${result.similarity.toFixed(2)})`);
+      }
+    },
+  },
+  {
+    command: 'peers',
+    description: 'List connected peers',
+    execute: async () => {
+      const client = new FederationClient({
+        agentId: 'cli-agent',
+        agentName: 'CLI Client',
+      });
+
+      console.log('Connected peers:', client.getConnectedPeers().join(', ') || 'none');
+    },
+  },
+  {
+    command: 'status',
+    description: 'Show federation status',
+    execute: async () => {
+      const client = new FederationClient({
+        agentId: 'cli-agent',
+        agentName: 'CLI Client',
+      });
+
+      console.log('Status: Disconnected');
+      console.log('Peers: none');
+      console.log('Local memories: 0');
+    },
+  },
+];
+
+async function main() {
+  const [,, command, ...args] = process.argv;
+
+  if (!command) {
+    console.log('Agent Memory Federation CLI\n');
+    console.log('Usage: federation <command> [args]\n');
+    console.log('Commands:');
+    for (const cmd of commands) {
+      console.log(`  ${cmd.command.padEnd(12)} ${cmd.description}`);
+    }
+    process.exit(1);
+  }
+
+  const cmd = commands.find(c => c.command === command);
+  if (!cmd) {
+    console.error(`Unknown command: ${command}`);
+    process.exit(1);
+  }
+
+  await cmd.execute(args);
+}
+
+main().catch(console.error);

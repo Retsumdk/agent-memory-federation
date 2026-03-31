@@ -1,0 +1,32 @@
+{
+  "name": "agent-memory-federation",
+  "version": "1.0.0",
+  "description": "Distributed system enabling AI agents to share and synchronize memory stores",
+  "main": "src/index.ts",
+  "bin": {
+    "federation": "./bin/federation"
+  },
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "scripts": {
+    "test": "bun test",
+    "build": "bun build ./bin/federation --outdir ./dist"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "memory",
+    "federation",
+    "distributed",
+    "vector-search"
+  ],
+  "author": "Retsumdk",
+  "license": "MIT"
+}
