@@ -1,1 +1,11 @@
-bmFtZTogQ0kKb246IFtwdXNoLCBwdWxsX3JlcXVlc3RdCmpvYnM6CiAgdGVzdDoKICAgIHJ1bnMtb246IHVidW50dS1sYXRlc3QKICAgIHN0ZXBzOgogICAgICAtIHVzZXM6IGFjdGlvbnMvY2hlY2tvdXRAdjQKICAgICAgLSB1c2VzOiBhY3Rpb25zL3NldHVwLW5vZGVAdjQKICAgICAgICB3aXRoOiB7IG5vZGUtdmVyc2lvbjogJzIwJyB9CiAgICAgIC0gcnVuOiBucG0gY2kKICAgICAgLSBydW46IG5wbSB0ZXN0CiAgICAgIC0gcnVuOiBucG0gcnVuIGJ1aWxkCg==
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+      - run: bun install
+      - run: bun run build
